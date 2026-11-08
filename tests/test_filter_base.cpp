@@ -13,7 +13,7 @@ public:
 int main() {
     DummyFilter filter;
 
-    // Default initialization should set state to zero and covariance to identity
+    // Test default initialization
     assert(filter.getState().isZero() && "Default state should be zero.");
     assert(filter.getStateCovariance().isIdentity() && "Default covariance should be identity.");
     assert(filter.getProcessNoiseCovariance().isZero() && "Default process noise covariance should be zero.");

@@ -12,5 +12,9 @@ target_link_libraries(kalman INTERFACE Eigen3::Eigen)
 add_executable(test_filter_base tests/test_filter_base.cpp)
 target_link_libraries(test_filter_base PRIVATE kalman::kalman)
 
+add_executable(test_kalman_filter tests/test_kalman_filter.cpp)
+target_link_libraries(test_kalman_filter PRIVATE kalman::kalman)
+
 enable_testing()
-add_test(NAME test_filter_base COMMAND test_filter_base)
+add_test(NAME test_filter_base   COMMAND test_filter_base)
+add_test(NAME test_kalman_filter COMMAND test_kalman_filter)
