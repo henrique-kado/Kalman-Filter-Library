@@ -46,7 +46,11 @@ public:
         // Update the state with measurement
         const Measurement y = z - H_ * this->x_; // Measurement residual
         const MeasurementCovariance S = H_ * this->P_ * H_.transpose() + this->R_; // Residual covariance
-        const GainMatrix K = this->P_ * H_.transpose() * S.inverse(); // Kalman gain
+        Eigen::LDLT<MeasurementCovariance> S_ldlt(S);
+        if (S_ldlt.info() != Eigen::Success || !S_ldlt.isPositive() || (S_ldlt.vectorD().array() <= Scalar(0)).any()) {
+            throw std::runtime_error("Residual covariance S is not positive definite.");
+        }
+        const GainMatrix K = S_ldlt.solve(H_ * this->P_).transpose(); // Kalman gain
 
         this->x_ += K * y; // Update state estimate
         const StateCovariance I_KH = StateCovariance::Identity() - K * H_;

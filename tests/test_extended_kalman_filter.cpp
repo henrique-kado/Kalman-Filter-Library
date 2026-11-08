@@ -283,6 +283,26 @@ void testRangeBearingConverges() {
     assert(final_error < 0.05 && "Range-bearing: estimate should end within 0.05 of [3, 4].");
 }
 
+// ---------------------------------------------------------------------------
+// update() must throw when S = H P H^T + R is not positive definite.
+//
+//   h(x) = x, H = 1, P = 0, R = 0  ->  S = 0 (singular)
+// ---------------------------------------------------------------------------
+void testUpdateThrowsOnSingularS() {
+    using EKF = kalman::ExtendedKalmanFilter<double, 1, 1>;
+    EKF filter;
+
+    filter.setMeasurementFunction([](const EKF::State& x) -> EKF::Measurement { return x; });
+    filter.setMeasurementJacobian([](const EKF::State&) { return EKF::MeasurementMatrix::Identity().eval(); });
+    filter.setMeasurementNoiseCovariance(EKF::MeasurementCovariance::Zero());
+    filter.init(EKF::State::Zero(), EKF::StateCovariance::Zero());
+
+    EKF::Measurement z;
+    z << 1.0;
+    assert(throwsRuntimeError([&] { filter.update(z); }) &&
+           "update() should throw std::runtime_error when S is singular.");
+}
+
 }  // namespace
 
 int main() {
@@ -292,6 +312,7 @@ int main() {
     testControlIsPassedToModel();
     testRangeMeasurementUpdate();
     testRangeBearingConverges();
+    testUpdateThrowsOnSingularS();
 
     std::cout << "All ExtendedKalmanFilter tests passed" << std::endl;
 }

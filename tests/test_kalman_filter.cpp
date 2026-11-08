@@ -10,6 +10,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 
 namespace {
 
@@ -240,6 +241,34 @@ void testCovarianceStaysValid() {
     assert(near(filter.getState()(1), 3.0, 1e-3) && "Velocity should converge to 3.");
 }
 
+// ---------------------------------------------------------------------------
+// update() must throw when S = H P H^T + R is not positive definite.
+//
+//   P = 0, R = 0, H = 1  ->  S = 0 (singular)
+// Without the check the gain is silently computed from a singular S.
+// ---------------------------------------------------------------------------
+void testUpdateThrowsOnSingularS() {
+    using KF = kalman::KalmanFilter<double, 1, 1>;
+    KF filter;
+
+    KF::MeasurementMatrix H;
+    H << 1.0;
+    filter.setMeasurementMatrix(H);
+    filter.setMeasurementNoiseCovariance(KF::MeasurementCovariance::Zero());
+    filter.init(KF::State::Zero(), KF::StateCovariance::Zero());
+
+    KF::Measurement z;
+    z << 1.0;
+
+    bool threw = false;
+    try {
+        filter.update(z);
+    } catch (const std::runtime_error&) {
+        threw = true;
+    }
+    assert(threw && "update() should throw std::runtime_error when S is singular.");
+}
+
 }  // namespace
 
 int main() {
@@ -249,6 +278,7 @@ int main() {
     testPredictWithControl();
     testPredictAddsProcessNoise();
     testCovarianceStaysValid();
+    testUpdateThrowsOnSingularS();
 
     std::cout << "All KalmanFilter tests passed" << std::endl;
 }
