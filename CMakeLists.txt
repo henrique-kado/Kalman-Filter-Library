@@ -21,9 +21,11 @@ target_link_libraries(kalman INTERFACE Eigen3::Eigen)
 # ---------------------------------------------------------------------------
 # Options
 #
-# Tests and install rules are on only when this is the main project, not when
-# another project pulls the library in with add_subdirectory or FetchContent.
-# Override with -DKALMAN_BUILD_TESTS=ON/OFF and -DKALMAN_INSTALL=ON/OFF.
+# Tests, examples and install rules are on only when this is the main project,
+# not when another project pulls the library in with add_subdirectory or
+# FetchContent.
+# Override with -DKALMAN_BUILD_TESTS=ON/OFF, -DKALMAN_BUILD_EXAMPLES=ON/OFF
+# and -DKALMAN_INSTALL=ON/OFF.
 # ---------------------------------------------------------------------------
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     set(KALMAN_IS_MAIN_PROJECT ON)
@@ -31,6 +33,7 @@ else()
     set(KALMAN_IS_MAIN_PROJECT OFF)
 endif()
 option(KALMAN_BUILD_TESTS "Build the kalman unit tests" ${KALMAN_IS_MAIN_PROJECT})
+option(KALMAN_BUILD_EXAMPLES "Build the kalman examples" ${KALMAN_IS_MAIN_PROJECT})
 option(KALMAN_INSTALL "Generate the kalman install rules" ${KALMAN_IS_MAIN_PROJECT})
 
 # ---------------------------------------------------------------------------
@@ -54,6 +57,13 @@ if(KALMAN_BUILD_TESTS)
     add_executable(test_unscented_kalman_filter tests/test_unscented_kalman_filter.cpp)
     target_link_libraries(test_unscented_kalman_filter PRIVATE kalman::kalman)
     add_test(NAME test_unscented_kalman_filter COMMAND test_unscented_kalman_filter)
+endif()
+
+# ---------------------------------------------------------------------------
+# Examples
+# ---------------------------------------------------------------------------
+if(KALMAN_BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()
 
 # ---------------------------------------------------------------------------

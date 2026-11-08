@@ -223,6 +223,21 @@ Os filtros lançam `std::runtime_error` quando:
 
 A biblioteca é header-only: não há nada para compilar, basta o caminho de includes e o Eigen.
 
+**Com CMake, instalando a biblioteca (`find_package`):**
+
+```bash
+git clone https://github.com/henrique-kado/Kalman-Filter-Library.git
+cmake -S Kalman-Filter-Library -B build
+sudo cmake --install build                 # instala em /usr/local
+```
+
+```cmake
+find_package(kalman 0.1 REQUIRED)
+target_link_libraries(meu_app PRIVATE kalman::kalman)
+```
+
+Para instalar em outra pasta, use `cmake --install build --prefix ~/libs` e, no seu projeto, `-DCMAKE_PREFIX_PATH=~/libs`. O Eigen também precisa estar instalado na máquina de quem usa a biblioteca: o `find_package(kalman)` procura por ele automaticamente.
+
 **Com CMake, como subdiretório:**
 
 ```cmake
@@ -260,6 +275,30 @@ ctest --test-dir build --output-on-failure
 
 Os testes ficam em `tests/`, um executável por filtro. Os valores esperados foram calculados à mão e estão nos comentários de cada teste.
 
+Opções do CMake:
+
+| Opção | Padrão | O que faz |
+|---|---|---|
+| `KALMAN_BUILD_TESTS` | `ON` quando a biblioteca é o projeto principal | compila os testes |
+| `KALMAN_BUILD_EXAMPLES` | `ON` quando a biblioteca é o projeto principal | compila os exemplos |
+| `KALMAN_INSTALL` | `ON` quando a biblioteca é o projeto principal | gera as regras de instalação |
+
+Quando a biblioteca entra em outro projeto via `add_subdirectory` ou `FetchContent`, as três ficam desligadas: nem os testes, nem os exemplos, nem a instalação da biblioteca vão parar no projeto de quem a usa.
+
+## Exemplos
+
+Cada exemplo simula o sistema real e um sensor ruidoso (com semente fixa, então a saída é sempre a mesma), roda o filtro e imprime uma tabela e o erro RMS no final. Depois de compilar:
+
+```bash
+./build/examples/constant_velocity
+./build/examples/pendulum_ekf
+```
+
+| Exemplo | Filtro | O que mostra |
+|---|---|---|
+| [`constant_velocity.cpp`](examples/constant_velocity.cpp) | KF | Objeto em linha reta a 2 m/s, medindo só a posição com ruído de 0,5 m. O filtro começa sem saber a velocidade e a descobre só pelas posições; o erro de posição cai de 0,47 m (medidas) para 0,19 m. |
+| [`pendulum_ekf.cpp`](examples/pendulum_ekf.cpp) | EKF | Pêndulo solto de 1 rad, medindo só o ângulo com ruído de 0,1 rad. O modelo é não linear (sen θ); o erro do ângulo cai de 0,10 rad para 0,017 rad, e a velocidade angular, que nunca é medida, é estimada com erro de 0,07 rad/s. |
+
 ## Estrutura
 
 ```
@@ -270,6 +309,8 @@ include/kalman/
   extended_kalman_filter.hpp    EKF
   unscented_kalman_filter.hpp   UKF
 tests/                          testes de cada filtro
+examples/                       exemplos de uso
+cmake/                          modelo do arquivo usado pelo find_package
 ```
 
 ## Licença
