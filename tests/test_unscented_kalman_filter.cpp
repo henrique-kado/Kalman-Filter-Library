@@ -249,6 +249,53 @@ void testErrors() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// After every update P must be EXACTLY symmetric, not just approximately.
+// P -= K Pzz K^T alone leaves round-off asymmetry: in this scenario (2D
+// constant-velocity target tracked by a range-bearing radar) it shows up in
+// about half of the first 200 updates.
+// ---------------------------------------------------------------------------
+void testCovarianceIsExactlySymmetric() {
+    using UKF = kalman::UnscentedKalmanFilter<double, 4, 2>;  // [px, py, vx, vy]
+    const double dt = 0.1;
+
+    UKF filter;
+    filter.setParameters(0.5, 2.0, 0.0);
+    filter.setStateTransitionFunction([dt](const UKF::State& x, const UKF::Control&) {
+        UKF::State next = x;
+        next(0) += x(2) * dt;
+        next(1) += x(3) * dt;
+        return next;
+    });
+    filter.setMeasurementFunction([](const UKF::State& x) {
+        UKF::Measurement z;
+        z << std::hypot(x(0), x(1)), std::atan2(x(1), x(0));
+        return z;
+    });
+    filter.setProcessNoiseCovariance(UKF::StateCovariance::Identity() * 1e-3);
+    UKF::MeasurementCovariance R;
+    R << 0.01, 0.0,
+         0.0,  1e-4;
+    filter.setMeasurementNoiseCovariance(R);
+
+    UKF::State truth;
+    truth << 50.0, 20.0, 1.0, -0.5;
+    filter.init(truth, UKF::StateCovariance::Identity());
+
+    for (int k = 0; k < 200; ++k) {
+        truth(0) += truth(2) * dt;
+        truth(1) += truth(3) * dt;
+        UKF::Measurement z;
+        z << std::hypot(truth(0), truth(1)), std::atan2(truth(1), truth(0));
+
+        filter.predict();
+        filter.update(z);
+
+        const UKF::StateCovariance& P = filter.getStateCovariance();
+        assert(P == P.transpose() && "P should be exactly symmetric after update().");
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -258,6 +305,7 @@ int main() {
     testControlIsPassedToModel();
     testRangeBearingConverges();
     testErrors();
+    testCovarianceIsExactlySymmetric();
 
     std::cout << "All UnscentedKalmanFilter tests passed" << std::endl;
 }

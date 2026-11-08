@@ -95,6 +95,10 @@ public:
 
         this->x_ += K * (z - z_hat);
         this->P_ -= K * Pzz * K.transpose();
+
+        // The subtraction above accumulates round-off asymmetry over long runs;
+        // P is symmetric by definition, so restore it explicitly.
+        this->P_ = (Scalar(0.5) * (this->P_ + this->P_.transpose())).eval();
     }
 
     // Setters for parameters and functions

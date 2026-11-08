@@ -2,6 +2,8 @@
 
 #include <kalman/filter_base.hpp>
 
+#include <stdexcept>
+
 namespace kalman {
 /**
  * @brief A simple Kalman filter implementation.
