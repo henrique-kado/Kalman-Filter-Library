@@ -22,3 +22,7 @@ add_test(NAME test_kalman_filter COMMAND test_kalman_filter)
 add_executable(test_extended_kalman_filter tests/test_extended_kalman_filter.cpp)
 target_link_libraries(test_extended_kalman_filter PRIVATE kalman::kalman)
 add_test(NAME test_extended_kalman_filter COMMAND test_extended_kalman_filter)
+
+add_executable(test_unscented_kalman_filter tests/test_unscented_kalman_filter.cpp)
+target_link_libraries(test_unscented_kalman_filter PRIVATE kalman::kalman)
+add_test(NAME test_unscented_kalman_filter COMMAND test_unscented_kalman_filter)
